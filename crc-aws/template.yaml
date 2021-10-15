@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  crc-aws
+
+  Cloud Resume Challenge visitor counter
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  GetCountFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: counter/
+      Handler: app.get_count_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        GetCount:
+          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Properties:
+            Path: /count
+            Method: get
+      Environment:
+        Variables:
+          DB_NAME: !Select [1, !Split ['/', !GetAtt VisitorDB.Arn]] 
+          DB_KEY: visitors
+      Policies:
+        - Statement:
+          - Sid: CRCDynamoDBGetCountPolicy
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+            Resource: !GetAtt VisitorDB.Arn
+  
+  AddCountFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: counter/
+      Handler: app.add_count_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Events:
+        AddCount:
+          Type: Api
+          Properties:
+            Path: /add
+            Method: get
+      Environment:
+        Variables:
+          DB_NAME: !Select [1, !Split ['/', !GetAtt VisitorDB.Arn]] 
+          DB_KEY: visitors
+      Policies:
+        - Statement:
+          - Sid: CRCDynamoDBAddCountPolicy
+            Effect: Allow
+            Action:
+              - dynamodb:UpdateItem
+              - dynamodb:PutItem
+            Resource: !GetAtt VisitorDB.Arn
+
+  VisitorDB:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: name
+        Type: String
+      TableName: crc-aws-db
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  VisitorCounterApi:
+    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
