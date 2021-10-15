@@ -46,6 +46,9 @@ def get_count_handler(event, context):
 
     return {
         "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*"
+        },
         "body": json.dumps({
             "message": "success",
             "count": count
@@ -92,6 +95,9 @@ def add_count_handler(event, context):
 
     return {
         "statusCode": 200,
+        "headers": {
+            "Access-Control-Allow-Origin": "*"
+        },
         "body": json.dumps({
             "message": "success"
         }),
