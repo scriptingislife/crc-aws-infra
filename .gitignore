@@ -1,5 +1,7 @@
 crc-aws/.aws-sam
 crc-aws/samconfig.toml
+crc-aws/Pipfile
+crc-aws/Pipfile.lock
 
 # Created by https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
 

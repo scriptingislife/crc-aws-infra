@@ -1,8 +1,8 @@
 import json
-
+import boto3
 import pytest
-
-from hello_world import app
+from moto import mock_dynamodb2
+from counter import app
 
 
 @pytest.fixture()
@@ -61,13 +61,59 @@ def apigw_event():
         "path": "/examplepath",
     }
 
-
+@mock_dynamodb2
 def test_lambda_handler(apigw_event, mocker):
 
-    ret = app.lambda_handler(apigw_event, "")
+    # Create mock DynamoDB table
+    table_name = 'crc-aws-db'
+    dynamodb = boto3.resource('dynamodb', 'us-east-1')
+    table = dynamodb.create_table(
+        TableName=table_name,
+        KeySchema=[{'AttributeName': 'name', 'KeyType': 'HASH'}],
+        AttributeDefinitions=[{'AttributeName': 'name', 'AttributeType': 'S'}],
+        ProvisionedThroughput={'ReadCapacityUnits': 1, 'WriteCapacityUnits': 1}
+    )
+
+    # First Visitor
+    ret = app.add_count_handler(apigw_event, "")
     data = json.loads(ret["body"])
 
     assert ret["statusCode"] == 200
     assert "message" in ret["body"]
-    assert data["message"] == "hello world"
-    # assert "location" in data.dict_keys()
+    assert data["message"] == "success"
+
+    table = dynamodb.Table(table_name)
+    response = table.get_item(
+        Key={
+            'name': 'visitors'
+        }
+    )
+    item = response['Item']
+    assert item['visitors'] == 1
+
+    # Get Count
+    ret = app.get_count_handler(apigw_event, "")
+    data = json.loads(ret["body"])
+
+    assert ret["statusCode"] == 200
+    assert "message" in ret["body"]
+    assert data["message"] == "success"
+    assert "count" in ret["body"]
+    assert data["count"] == 1
+
+    # Second Visitor
+    ret = app.add_count_handler(apigw_event, "")
+    data = json.loads(ret["body"])
+
+    assert ret["statusCode"] == 200
+    assert "message" in ret["body"]
+    assert data["message"] == "success"
+
+    table = dynamodb.Table(table_name)
+    response = table.get_item(
+        Key={
+            'name': 'visitors'
+        }
+    )
+    item = response['Item']
+    assert item['visitors'] == 2

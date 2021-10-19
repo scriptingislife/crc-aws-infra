@@ -61,7 +61,6 @@ Resources:
             Effect: Allow
             Action:
               - dynamodb:UpdateItem
-              - dynamodb:PutItem
             Resource: !GetAtt VisitorDB.Arn
 
   VisitorDB:
@@ -79,6 +78,12 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  AddCountApi:
+    Description: "API Gateway endpoint URL for Prod stage for add count function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/add"
+  GetCountApi:
+    Description: "API Gateway endpoint URL for Prod stage for get count function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/count"
   VisitorCounterApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello World function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Description: "Base API Gateway URL for Prod stage for visitor counter API"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"

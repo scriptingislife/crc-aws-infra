@@ -27,21 +27,22 @@ def get_count_handler(event, context):
         Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
 
-    table_name = os.environ.get('DB_NAME')
-    key_name = os.environ.get('DB_KEY')
-
-    client = boto3.client('dynamodb')
-    response = client.get_item(
-        TableName=table_name,
-        Key={
-            'name': {'S': key_name}
-        }
-    )
+    table_name = os.environ.get('DB_NAME', 'crc-aws-db')
+    key_name = os.environ.get('DB_KEY', 'visitors')
 
     try:
+        # TODO: Error if the table doesn't exist
+        client = boto3.client('dynamodb')
+        response = client.get_item(
+            TableName=table_name,
+            Key={
+                'name': {'S': key_name}
+            }
+        )
+
         item = response['Item']
         count = int(item['visitors']['N'])
-    except KeyError:
+    except:
         count = 0
 
     return {
@@ -77,8 +78,8 @@ def add_count_handler(event, context):
         Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
     """
 
-    table_name = os.environ.get('DB_NAME')
-    key_name = os.environ.get('DB_KEY')
+    table_name = os.environ.get('DB_NAME', 'crc-aws-db')
+    key_name = os.environ.get('DB_KEY', 'visitors')
 
     client = boto3.client('dynamodb')
     response = client.update_item(

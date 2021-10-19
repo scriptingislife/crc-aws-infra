@@ -26,7 +26,7 @@ class TestApiGateway(TestCase):
     def setUp(self) -> None:
         """
         Based on the provided env variable AWS_SAM_STACK_NAME,
-        here we use cloudformation API to find out what the HelloWorldApi URL is
+        here we use cloudformation API to find out what the VisitorCounterApi URL is
         """
         stack_name = TestApiGateway.get_stack_name()
 
@@ -42,8 +42,8 @@ class TestApiGateway(TestCase):
         stacks = response["Stacks"]
 
         stack_outputs = stacks[0]["Outputs"]
-        api_outputs = [output for output in stack_outputs if output["OutputKey"] == "HelloWorldApi"]
-        self.assertTrue(api_outputs, f"Cannot find output HelloWorldApi in stack {stack_name}")
+        api_outputs = [output for output in stack_outputs if output["OutputKey"] == "VisitorCounterApi"]
+        self.assertTrue(api_outputs, f"Cannot find output VisitorCounterApi in stack {stack_name}")
 
         self.api_endpoint = api_outputs[0]["OutputValue"]
 
@@ -51,5 +51,11 @@ class TestApiGateway(TestCase):
         """
         Call the API Gateway endpoint and check the response
         """
-        response = requests.get(self.api_endpoint)
-        self.assertDictEqual(response.json(), {"message": "hello world"})
+        response = requests.get(self.api_endpoint + "/add")
+        self.assertDictEqual(response.json(), {"message": "success"})
+
+        response = requests.get(self.api_endpoint + "/count")
+        self.assertIn("message", response.json())
+        self.assertEqual(response.json()["message"], "success")
+        self.assertIn("count", response.json())
+        self.assertEqual(type(response.json()["count"]), int)
